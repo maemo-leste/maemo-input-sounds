@@ -4,5 +4,6 @@ CFLAGS = -Wall -Werror -Wextra -std=gnu99 -O2 -ggdb -g
 
 bin_PROGRAMS = maemo-xinput-sounds
 
-maemo_xinput_sounds_CFLAGS = $(CFLAGS) $(LIBDBUS_FLAGS) $(GCONF_CFLAGS)
+maemo_xinput_sounds_CFLAGS = $(CFLAGS) $(LIBDBUS_CFLAGS) $(LIBDBUSGLIB_CFLAGS) $(GCONF_CFLAGS) $(X11_CFLAGS) $(XEXT_CFLAGS) $(XTEST_CFLAGS)
+maemo_xinput_sounds_LDADD = $(LIBDBUS_LIBS) $(LIBDBUSGLIB_LIBS) $(GCONF_LIBS) $(X11_LIBS) $(XEXT_LIBS) $(XTEST_LIBS)
 maemo_xinput_sounds_SOURCES = maemo-input-sounds.c
