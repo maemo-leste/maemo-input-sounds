@@ -1,0 +1,23 @@
+AC_INIT([Maemo Input Sounds],
+        [1.0.0],
+        [merlijn@wizzup.org], [maemo-input-sounds])
+
+AM_INIT_AUTOMAKE
+LT_INIT([shared disable-static])
+AC_CONFIG_FILES(Makefile)
+
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_LIBTOOL
+
+PKG_PROG_PKG_CONFIG
+
+PKG_CHECK_MODULES(LIBDBUS, dbus-1)
+AC_SUBST(LIBDBUS_CFLAGS)
+AC_SUBST(LIBDBUS_LIBS)
+
+PKG_CHECK_MODULES(GCONF, gconf-2.0)
+AC_SUBST(GCONF_CFLAGS)
+AC_SUBST(GCONF_LIBS)
+
+AC_OUTPUT
