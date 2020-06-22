@@ -5,3 +5,8 @@
 
 %:
 	dh $@ --with autoreconf
+
+override_dh_install:
+	dh_install
+	dh_installxsession --init-script='maemo-xinput-sounds-start' -u 'post 01'
+	dh_installxsession --init-script='maemo-xinput-sounds-restart' -u 'post 41'

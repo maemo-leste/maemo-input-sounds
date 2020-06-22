@@ -9,6 +9,7 @@ Build-Depends:
  libxtst-dev,
  libxext-dev,
  libx11-dev,
+ maemo-system-services-dev,
 Standards-Version: 3.7.2
 Section: libs
 
