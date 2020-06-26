@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <unistd.h>
+#include <getopt.h>
 
 #include <gconf/gconf-client.h>
 #include <glib.h>
