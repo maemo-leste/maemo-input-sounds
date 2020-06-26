@@ -33,6 +33,10 @@ void mis_mce_init(struct private_data *priv) {
 
 }
 
+void mis_mce_exit(struct private_data *priv) {
+	(void)priv;
+}
+
 void mis_vibra_init(struct private_data *priv) {
 	(void)priv;
 
@@ -76,6 +80,30 @@ void mis_vibra_exit(struct private_data *priv) {
 			g_object_unref(priv->gconf_client);
 		priv->gconf_client = NULL;
 	}
+}
+
+void mis_pulse_init(struct private_data *priv) {
+	(void)priv;
+}
+
+void mis_pulse_exit(struct private_data *priv) {
+	(void)priv;
+}
+
+void mis_profile_init(struct private_data *priv) {
+	(void)priv;
+}
+
+void mis_profile_exit(struct private_data *priv) {
+	(void)priv;
+}
+
+void mis_policy_init(struct private_data *priv) {
+	(void)priv;
+}
+
+void mis_policy_exit(struct private_data *priv) {
+	(void)priv;
 }
 
 void vibration_changed_notifier(GConfClient * client, guint cnxn_id,
@@ -295,19 +323,19 @@ int main(int argc, char **argv) {
 	(void)argc;
 	(void)argv;
 
-    struct option options;
-    int opt;
+	struct option options;
+	int opt;
 
-    while (1) {
-        //opt = getopt_long(argc, argv, "d:f:vhr", &options, NULL);
-        opt = getopt_long(argc, argv, "v", &options, NULL);
-        if (opt == -1)
-            break;
-        switch (opt) {
-            case 'v':
-                verbose = 1;
-        }
-    }
+	while (1) {
+		//opt = getopt_long(argc, argv, "d:f:vhr", &options, NULL);
+		opt = getopt_long(argc, argv, "v", &options, NULL);
+		if (opt == -1)
+			break;
+		switch (opt) {
+		case 'v':
+			verbose = 1;
+		}
+	}
 
 	struct private_data priv;
 
@@ -321,8 +349,12 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
+	mis_policy_init(&priv);
+	mis_profile_init(&priv);
+	mis_pulse_init(&priv);
 	mis_mce_init(&priv);
 	mis_vibra_init(&priv);
+
 	priv.display = XOpenDisplay(NULL);
 	if (!priv.display) {
 		// TODO: fprintf error with macro
@@ -341,7 +373,27 @@ int main(int argc, char **argv) {
 	static_priv = &priv;
 	g_main_loop_run(priv.loop);
 
+	if (priv.display && priv.display_thread) {
+		XRecordDisableContext(priv.display, priv.recordcontext);
+		XRecordFreeContext(priv.display, priv.recordcontext);
+		XCloseDisplay(priv.display);
+		XCloseDisplay(priv.display_thread);
+		g_thread_join(priv.thread);
+	}
+
+	priv.display = NULL;
+	priv.display_thread = NULL;
+	priv.recordcontext = 0;
+	priv.thread = NULL;
+
 	mis_vibra_exit(&priv);
+	mis_mce_exit(&priv);
+	mis_pulse_exit(&priv);
+	mis_profile_exit(&priv);
+	mis_policy_exit(&priv);
+
+	g_main_loop_unref(priv.loop);
+	g_hook_list_clear(&priv.g_hook_list);
 
 	return EXIT_SUCCESS;
 }
