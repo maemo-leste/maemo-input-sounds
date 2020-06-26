@@ -212,6 +212,9 @@ void xrec_data_cb(XPointer data, XRecordInterceptData * recdat) {
 	if (xrd[0] == ButtonPress && verbose) {
 		LOG_VERBOSE1("X ButtonPress %d\n", xrd[1]);
 	}
+	if (xrd[0] == MotionNotify && verbose) {
+		LOG_VERBOSE1("X MotionNotify %d\n", xrd[1]);
+	}
 	if (xrd[0] == KeyPress && verbose) {
 		LOG_VERBOSE1("X KeyPress %d\n", xrd[1]);
 	}
@@ -219,6 +222,8 @@ void xrec_data_cb(XPointer data, XRecordInterceptData * recdat) {
 	//if (priv->policy_state & 0xFFFFFF8) || !is_button)
 
 	if (priv->touch_vibration_enabled && xrd[0] == ButtonPress) {
+		mis_vibra_set_state(data, 1);
+	} else if (priv->touch_vibration_enabled && xrd[0] == MotionNotify) {
 		mis_vibra_set_state(data, 1);
 	}
 
@@ -230,7 +235,7 @@ void xrec_data_cb(XPointer data, XRecordInterceptData * recdat) {
 void *xrec_thread(void *data) {
 	struct private_data *priv = data;
 	int major, minor;
-	XRecordRange *ranges[2];
+	XRecordRange *ranges[3];
 	XRecordClientSpec spec;
 
 	priv->display_thread = XOpenDisplay(NULL);
@@ -250,8 +255,9 @@ void *xrec_thread(void *data) {
 
 	ranges[0] = XRecordAllocRange();
 	ranges[1] = XRecordAllocRange();
+	ranges[2] = XRecordAllocRange();
 
-	if (!ranges[0] || !ranges[1]) {
+	if (!ranges[0] || !ranges[1] || !ranges[2]) {
 		LOG_ERROR("failed to allocate X Record Range");
 	}
 
@@ -259,10 +265,12 @@ void *xrec_thread(void *data) {
 	ranges[0]->device_events.last = KeyPress;
 	ranges[1]->device_events.first = ButtonPress;
 	ranges[1]->device_events.last = ButtonPress;
+	ranges[2]->device_events.first = MotionNotify;
+	ranges[2]->device_events.last = MotionNotify;
 	spec = XRecordAllClients;
 
 	priv->recordcontext =
-	    XRecordCreateContext(priv->display_thread, 0, &spec, 1, ranges, 2);
+	    XRecordCreateContext(priv->display_thread, 0, &spec, 1, ranges, 3);
 	if (!priv->recordcontext) {
 		LOG_ERROR("failed to create X Record Context");
 		exit(1);
@@ -277,6 +285,7 @@ void *xrec_thread(void *data) {
 
 	XFree(ranges[0]);
 	XFree(ranges[1]);
+	XFree(ranges[2]);
 
 	return NULL;
 }
