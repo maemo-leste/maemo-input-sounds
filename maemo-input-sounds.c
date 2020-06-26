@@ -1,7 +1,8 @@
 #include "maemo-input-sounds.h"
 
 static struct private_data *static_priv = NULL;
-int verbose = 1;		// XXX
+
+static int verbose = 0;
 
 void mis_mce_init(struct private_data *priv) {
 	DBusError error;
@@ -293,6 +294,20 @@ void *xrec_thread(void *data) {
 int main(int argc, char **argv) {
 	(void)argc;
 	(void)argv;
+
+    struct option options;
+    int opt;
+
+    while (1) {
+        //opt = getopt_long(argc, argv, "d:f:vhr", &options, NULL);
+        opt = getopt_long(argc, argv, "v", &options, NULL);
+        if (opt == -1)
+            break;
+        switch (opt) {
+            case 'v':
+                verbose = 1;
+        }
+    }
 
 	struct private_data priv;
 
