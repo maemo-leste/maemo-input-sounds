@@ -69,6 +69,14 @@ void mis_vibra_init(struct private_data *priv) {
 
 }
 
+void mis_vibra_exit(struct private_data *priv) {
+	if (priv) {
+		if (priv->gconf_client)
+			g_object_unref(priv->gconf_client);
+		priv->gconf_client = NULL;
+	}
+}
+
 void vibration_changed_notifier(GConfClient * client, guint cnxn_id,
 				GConfEntry * entry, gpointer user_data) {
 	(void)client;
@@ -308,6 +316,8 @@ int main(int argc, char **argv) {
 
 	static_priv = &priv;
 	g_main_loop_run(priv.loop);
+
+	mis_vibra_exit(&priv);
 
 	return EXIT_SUCCESS;
 }

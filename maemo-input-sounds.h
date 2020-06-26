@@ -51,6 +51,7 @@ struct private_data {
 
 void vibration_changed_notifier(GConfClient *client, guint cnxn_id, GConfEntry *entry, gpointer user_data);
 void mis_vibra_init(struct private_data* priv);
+void mis_vibra_exit(struct private_data* priv);
 void mis_mce_init(struct private_data* priv);
 DBusHandlerResult mis_dbus_mce_filter(DBusConnection *conn, DBusMessage *msg, void* data);
 static void mis_request_state(void* data, int state);
