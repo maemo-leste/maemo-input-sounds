@@ -257,7 +257,7 @@ void *xrec_thread(void *data) {
 	ranges[1] = XRecordAllocRange();
 	ranges[2] = XRecordAllocRange();
 
-	if (!ranges[0] || !ranges[1] || ranges[2]) {
+	if (!ranges[0] || !ranges[1] || !ranges[2]) {
 		LOG_ERROR("failed to allocate X Record Range");
 	}
 
