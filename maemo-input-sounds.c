@@ -1,54 +1,65 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-
-#include <glib.h>
-#include <dbus/dbus.h>
-#include <dbus/dbus-glib.h>
-#include <dbus/dbus-glib-lowlevel.h>
-
-
-#include <X11/Xlib.h>
-#include <X11/extensions/record.h>
-
-
-int verbose = 1; // XXX
-
-#define LOG_ERROR(msg) fprintf(stderr, "%s:%u, %s(): " msg "\n", __FILE__, __LINE__, __FUNCTION__);
-#define LOG_VERBOSE(msg) \
-{ \
-    if (verbose) { \
-        fprintf(stderr, "%s:%u, %s(): " msg "\n", __FILE__, __LINE__, __FUNCTION__); \
-    } \
-}
-#define LOG_VERBOSE1(fmt, ...) \
-{ \
-    if (verbose) { \
-        fprintf(stderr, "%s:%u, %s(): " fmt "\n", __FILE__, __LINE__, __FUNCTION__, __VA_ARGS__); \
-    } \
-}
-
-struct private_data {
-    GMainLoop* loop;
-    Display* display;
-    Display* display_thread;
-    XRecordContext recordcontext;
-    GThread* thread;
-
-    DBusConnection* dbus_system;
-
-    struct timespec last_event_ts;
-
-    int touch_vibration_enabled;
-
-    GHookList g_hook_list;
-};
+#include "maemo-input-sounds.h"
 
 static struct private_data* static_priv = NULL;
+int verbose = 1; // XXX
+
+void vibration_changed_notifier(GConfClient *client, guint cnxn_id, GConfEntry *entry, gpointer user_data) {
+    (void)client;
+    (void)cnxn_id;
+
+    struct private_data* priv = (void*)user_data;
+    GConfValue *gconf_val;
+    const char* gconf_key;
+
+    if (!priv) {
+        LOG_ERROR("no priv");
+        return;
+    }
+
+    gconf_val = gconf_entry_get_value(entry);
+    if (gconf_val) {
+        gconf_key = gconf_entry_get_key(entry);
+        if (g_str_equal(gconf_key, GCONF_SYSTEM_OSSO_DSM_VIBRA_TS_ENABLED)) {
+            if (gconf_val->type == GCONF_VALUE_BOOL) {
+                priv->touch_vibration_enabled = gconf_value_get_bool(gconf_val);
+                if (!priv->touch_vibration_enabled)
+                    mis_request_state(priv, 0);
+            } else {
+                LOG_ERROR("gconf_val->type != GCONF_VALUE_BOOL");
+            }
+        }
+    } else {
+        LOG_ERROR("gconf_val is NULL");
+    }
+}
 
 void mis_vibra_init(struct private_data* priv) {
     (void)priv;
-    priv->touch_vibration_enabled = 1; // XXX
+
+    if (!priv) {
+        LOG_ERROR("no priv");
+        return;
+    }
+
+    priv->touch_vibration_enabled = 1;
+
+    if (priv->gconf_client) {
+        g_object_ref(priv->gconf_client);
+    } else {
+        priv->gconf_client = gconf_client_get_default();
+        if (!priv->gconf_client) {
+            LOG_ERROR("could not allocate gconf client");
+            return;
+        }
+    }
+
+    gconf_client_add_dir(priv->gconf_client, GCONF_SYSTEM_OSSO_DSM_VIBRA, GCONF_CLIENT_PRELOAD_NONE, NULL);
+    gconf_client_notify_add(priv->gconf_client, GCONF_SYSTEM_OSSO_DSM_VIBRA_TS_ENABLED, vibration_changed_notifier, (gpointer)priv, NULL, NULL);
+    priv->touch_vibration_enabled = gconf_client_get_bool(priv->gconf_client, GCONF_SYSTEM_OSSO_DSM_VIBRA_TS_ENABLED, NULL);
+    if (verbose) {
+        LOG_VERBOSE1("vibra initialised and %s", priv->touch_vibration_enabled ? "enabled" : "disabled");
+    }
+
 }
 
 DBusHandlerResult mis_dbus_mce_filter(DBusConnection *conn, DBusMessage *msg, void* data) {
@@ -84,7 +95,7 @@ void mis_mce_init(struct private_data* priv) {
 
 }
 
-void mis_request_state(void* data, int state) {
+static void mis_request_state(void* data, int state) {
     struct private_data* priv = (void*)data;
     DBusMessage *msg;
 
@@ -132,8 +143,8 @@ void mis_vibra_set_state(void* data, int state) {
 int xerror_handler(Display* display, XErrorEvent* ev) {
     (void)display;
     (void)ev;
-    /* TODO */
-    fprintf(stderr, "xerror_handler fired\n");
+
+    LOG_ERROR("X11 error_handler fired");
 
     return 0;
 }
