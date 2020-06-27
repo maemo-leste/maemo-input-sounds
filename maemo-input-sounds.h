@@ -67,6 +67,8 @@ void mis_policy_exit(struct private_data *priv);
 
 int sound_init(struct private_data *priv);
 
+void signal_handler(int signal);
+
 void context_state_callback(pa_context * c, void *userdata);
 void volume_changed_cb(void *data);
 DBusHandlerResult mis_dbus_mce_filter(DBusConnection * conn, DBusMessage * msg,

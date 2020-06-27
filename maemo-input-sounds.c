@@ -206,9 +206,9 @@ int sound_init(struct private_data *priv) {
 
 	if (ret)
 		LOG_VERBOSE1("failed to change canberra properties: %s",
-			     ca_strerror(ret))
+			     ca_strerror(ret));
 
-		    ret = ca_context_set_driver(priv->canberra_ctx, "pulse");
+	ret = ca_context_set_driver(priv->canberra_ctx, "pulse");
 	if (ret) {
 		LOG_ERROR1("failed to select canberra PulseAudio driver: %s",
 			   ca_strerror(ret));
@@ -234,6 +234,26 @@ int sound_init(struct private_data *priv) {
 		}
 	}
 	return ret;
+}
+
+int sound_exit(struct private_data *priv) {
+	int ret = 0;
+
+	if (priv->canberra_ctx) {
+		ret = ca_context_destroy(priv->canberra_ctx);
+		priv->canberra_ctx = NULL;
+	}
+
+	return ret;
+}
+
+void signal_handler(int signal) {
+	fprintf(stderr, "Signal (%d) received, exiting\n", signal);
+	if (static_priv) {
+		g_main_loop_quit(static_priv->loop);
+	} else {
+		exit(0);
+	}
 }
 
 void volume_changed_cb(void *data) {
@@ -520,8 +540,12 @@ int main(int argc, char **argv) {
 	}
 	sound_init(&priv);
 
+	signal(SIGINT, signal_handler);
+	signal(SIGTERM, signal_handler);
+
 	static_priv = &priv;
 	g_main_loop_run(priv.loop);
+	sound_exit(&priv);
 
 	if (priv.display && priv.display_thread) {
 		XRecordDisableContext(priv.display, priv.recordcontext);
