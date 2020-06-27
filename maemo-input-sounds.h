@@ -9,7 +9,8 @@
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
-
+#include <pulse/pulseaudio.h>
+#include <pulse/glib-mainloop.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/record.h>
 
@@ -38,6 +39,8 @@ struct private_data {
 	GThread *thread;
 
 	DBusConnection *dbus_system;
+	pa_context *pa_ctx;
+	GHook *volume_changed_hook;
 
 	struct timespec last_event_ts;
 
@@ -59,6 +62,9 @@ void mis_profile_init(struct private_data *priv);
 void mis_profile_exit(struct private_data *priv);
 void mis_policy_init(struct private_data *priv);
 void mis_policy_exit(struct private_data *priv);
+
+void context_state_callback(pa_context * c, void *userdata);
+void volume_changed_cb(void *data);
 DBusHandlerResult mis_dbus_mce_filter(DBusConnection * conn, DBusMessage * msg,
 				      void *data);
 static void mis_request_state(void *data, int state);

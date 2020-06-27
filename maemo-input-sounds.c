@@ -83,7 +83,68 @@ void mis_vibra_exit(struct private_data *priv) {
 }
 
 void mis_pulse_init(struct private_data *priv) {
-	(void)priv;
+	GMainContext *gmainctx;
+	pa_glib_mainloop *pa_glib_main;
+
+	pa_mainloop_api *api;
+	pa_proplist *pa_proplist;
+
+	if (!priv) {
+		LOG_ERROR("priv is null");
+		return;
+	}
+
+	if (priv->pa_ctx) {
+		LOG_ERROR("priv->pa_ctx already set");
+		return;
+	}
+
+	gmainctx = g_main_context_default();
+	pa_glib_main = pa_glib_mainloop_new(gmainctx);
+	if (!pa_glib_main) {
+		LOG_ERROR("Unable to create pa_glib_mainloop");
+		return;
+	}
+
+	api = pa_glib_mainloop_get_api(pa_glib_main);
+	if (!api) {
+		LOG_ERROR("Cannot get pa glib mainloop api");
+		return;
+	}
+
+	pa_proplist = pa_proplist_new();
+	pa_proplist_sets(pa_proplist, "application.name", "maemo-input-sounds");
+	pa_proplist_sets(pa_proplist, "application.id",
+			 "org.maemo.XInputSounds");
+	pa_proplist_sets(pa_proplist, "application.version", "0.7");
+	priv->pa_ctx = pa_context_new_with_proplist(api, 0, pa_proplist);
+	if (priv->pa_ctx) {
+		pa_proplist_free(pa_proplist);
+		pa_context_set_state_callback(priv->pa_ctx,
+					      (pa_context_notify_cb_t) &
+					      context_state_callback, (void *)priv);
+
+		if (pa_context_connect
+		    (priv->pa_ctx, NULL, PA_CONTEXT_NOAUTOSPAWN, 0) < 0) {
+			if (verbose)
+				LOG_ERROR("Connection failed");
+			pa_context_unref(priv->pa_ctx);
+			priv->pa_ctx = NULL;
+			pa_glib_mainloop_free(pa_glib_main);
+		}
+
+		priv->volume_changed_hook = g_hook_alloc(&priv->g_hook_list);
+
+		if (priv->volume_changed_hook) {
+			priv->volume_changed_hook->data = (gpointer) priv;
+			priv->volume_changed_hook->func = volume_changed_cb;
+			g_hook_insert_before(&priv->g_hook_list,
+					     0, priv->volume_changed_hook);
+			return;
+		}
+
+		LOG_ERROR("Unable to set volume_changed_hook");
+	}
 }
 
 void mis_pulse_exit(struct private_data *priv) {
@@ -104,6 +165,17 @@ void mis_policy_init(struct private_data *priv) {
 
 void mis_policy_exit(struct private_data *priv) {
 	(void)priv;
+}
+
+void volume_changed_cb(void *data) {
+	struct private_data *priv = (void *)data;
+	(void)priv;
+}
+
+void context_state_callback(pa_context * c, void *userdata) {
+	(void)c;
+	(void)userdata;
+	return;
 }
 
 void vibration_changed_notifier(GConfClient * client, guint cnxn_id,
@@ -140,8 +212,8 @@ void vibration_changed_notifier(GConfClient * client, guint cnxn_id,
 	}
 }
 
-DBusHandlerResult mis_dbus_mce_filter(DBusConnection * conn, DBusMessage * msg,
-				      void *data) {
+DBusHandlerResult mis_dbus_mce_filter(DBusConnection * conn,
+				      DBusMessage * msg, void *data) {
 	(void)conn;
 	(void)msg;
 	(void)data;
@@ -229,8 +301,8 @@ void xrec_data_cb(XPointer data, XRecordInterceptData * recdat) {
 	clock_gettime(CLOCK_MONOTONIC, &ts);
 
 	diff_ms =
-	    (1000 * (ts.tv_sec - priv->last_event_ts.tv_sec)) + (ts.tv_nsec -
-								 priv->last_event_ts.tv_nsec)
+	    (1000 * (ts.tv_sec - priv->last_event_ts.tv_sec)) +
+	    (ts.tv_nsec - priv->last_event_ts.tv_nsec)
 	    / 1000000;
 	if (diff_ms < 33) {
 		goto done;
