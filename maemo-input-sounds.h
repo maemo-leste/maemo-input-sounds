@@ -11,6 +11,7 @@
 #include <dbus/dbus-glib-lowlevel.h>
 #include <pulse/pulseaudio.h>
 #include <pulse/glib-mainloop.h>
+#include <canberra.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/record.h>
 
@@ -18,6 +19,7 @@
 #define GCONF_SYSTEM_OSSO_DSM_VIBRA_TS_ENABLED "/system/osso/dsm/vibra/touchscreen_vibra_enabled"
 
 #define LOG_ERROR(msg) fprintf(stderr, "%s:%u, %s(): " msg "\n", __FILE__, __LINE__, __FUNCTION__);
+#define LOG_ERROR1(fmt, ...) fprintf(stderr, "%s:%u, %s(): " fmt "\n", __FILE__, __LINE__, __FUNCTION__, __VA_ARGS__);
 #define LOG_VERBOSE(msg) \
 { \
     if (verbose) { \
@@ -37,13 +39,13 @@ struct private_data {
 	Display *display_thread;
 	XRecordContext recordcontext;
 	GThread *thread;
-
+	ca_context *canberra_ctx;
+	char *canberra_device_name;
+	struct timespec last_event_ts;
 	DBusConnection *dbus_system;
 	pa_context *pa_ctx;
 	GHook *volume_changed_hook;
-
-	struct timespec last_event_ts;
-
+	pa_context_state_t pa_ctx_state;
 	GConfClient *gconf_client;
 	int touch_vibration_enabled;
 
@@ -62,6 +64,8 @@ void mis_profile_init(struct private_data *priv);
 void mis_profile_exit(struct private_data *priv);
 void mis_policy_init(struct private_data *priv);
 void mis_policy_exit(struct private_data *priv);
+
+int sound_init(struct private_data *priv);
 
 void context_state_callback(pa_context * c, void *userdata);
 void volume_changed_cb(void *data);
