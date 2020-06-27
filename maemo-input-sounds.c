@@ -122,7 +122,8 @@ void mis_pulse_init(struct private_data *priv) {
 		pa_proplist_free(pa_proplist);
 		pa_context_set_state_callback(priv->pa_ctx,
 					      (pa_context_notify_cb_t) &
-					      context_state_callback, (void *)priv);
+					      context_state_callback,
+					      (void *)priv);
 
 		if (pa_context_connect
 		    (priv->pa_ctx, NULL, PA_CONTEXT_NOAUTOSPAWN, 0) < 0) {
@@ -179,6 +180,60 @@ void mis_policy_init(struct private_data *priv) {
 
 void mis_policy_exit(struct private_data *priv) {
 	(void)priv;
+}
+
+int sound_init(struct private_data *priv) {
+	char *display_name;
+	int ret;
+
+	if (ca_context_create(&priv->canberra_ctx)) {
+		LOG_ERROR("failed to create canberra context");
+		exit(1);
+	}
+
+	display_name = XDisplayName(0);
+	ret = ca_context_change_props(priv->canberra_ctx,
+				      "application.name",
+				      "maemo-input-sounds",
+				      "application.id",
+				      "org.maemo.XInputSounds",
+				      "window.x11.screen",
+				      display_name,
+				      "media.language",
+				      "en_EN",
+				      "canberra.cache-control",
+				      "permanent", NULL);
+
+	if (ret)
+		LOG_VERBOSE1("failed to change canberra properties: %s",
+			     ca_strerror(ret))
+
+		    ret = ca_context_set_driver(priv->canberra_ctx, "pulse");
+	if (ret) {
+		LOG_ERROR1("failed to select canberra PulseAudio driver: %s",
+			   ca_strerror(ret));
+		exit(1);
+	}
+
+	ret = ca_context_open(priv->canberra_ctx);
+	if (ret) {
+		LOG_ERROR1("failed to open canberra context: %s",
+			   ca_strerror(ret));
+	}
+
+	if (priv->canberra_device_name) {
+		ret =
+		    ca_context_change_device(priv->canberra_ctx,
+					     priv->canberra_device_name);
+		if (ret) {
+			LOG_VERBOSE1("failed to reroute context to %s",
+				     ca_strerror(ret));
+		} else {
+			LOG_VERBOSE1("sound rerouted to %s",
+				     priv->canberra_device_name);
+		}
+	}
+	return ret;
 }
 
 void volume_changed_cb(void *data) {
@@ -409,23 +464,31 @@ int main(int argc, char **argv) {
 	(void)argc;
 	(void)argv;
 
+	struct private_data priv;
+
 	struct option options;
 	int opt;
 
+	memset(&priv, 0, sizeof(struct private_data));
+
 	while (1) {
 		//opt = getopt_long(argc, argv, "d:f:vhr", &options, NULL);
-		opt = getopt_long(argc, argv, "v", &options, NULL);
+		opt = getopt_long(argc, argv, "d:v", &options, NULL);
 		if (opt == -1)
 			break;
 		switch (opt) {
 		case 'v':
 			verbose = 1;
+			break;
+		case 'd':
+			priv.canberra_device_name = optarg;
+			break;
+		default:
+			/* TODO: print help */
+			LOG_ERROR("Invalid option");
+			return 1;
 		}
 	}
-
-	struct private_data priv;
-
-	memset(&priv, 0, sizeof(struct private_data));
 
 	g_hook_list_init(&priv.g_hook_list, sizeof(GHook));
 	priv.loop = g_main_loop_new(NULL, 0);
@@ -455,6 +518,7 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 
 	}
+	sound_init(&priv);
 
 	static_priv = &priv;
 	g_main_loop_run(priv.loop);
