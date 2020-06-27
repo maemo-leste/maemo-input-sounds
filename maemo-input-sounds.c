@@ -82,6 +82,11 @@ void mis_vibra_exit(struct private_data *priv) {
 	}
 }
 
+int call_mis_pulse_init(gpointer data) {
+	mis_pulse_init((struct private_data *)data);
+	return 0;
+}
+
 void mis_pulse_init(struct private_data *priv) {
 	GMainContext *gmainctx;
 	pa_glib_mainloop *pa_glib_main;
@@ -247,6 +252,86 @@ int sound_exit(struct private_data *priv) {
 	return ret;
 }
 
+int sound_play(struct private_data *priv, int event_code, signed int interval) {
+	int result;
+	char *volume;
+	const char *media_path;
+	const char *media_name;
+	int play_failed;
+	int vol;
+	char *s = alloca(sizeof(char) * 16);
+
+	if (priv->pa_ctx_state != PA_CONTEXT_READY)
+		return 0;
+
+	if (priv->sound_not_ready) {
+		sound_exit(priv);
+		sound_init(priv);
+		priv->sound_not_ready = 0;
+	}
+	if (priv->canberra_ctx) {
+		// TODO: policy_state / profile state
+#if 0
+		if (*priv->policy_state_maybe)
+			return 0;
+#endif
+
+		if (event_code == ButtonPress) {
+			volume = "0";
+			//volume = priv->volume_pen_down;
+			media_path = "/usr/share/sounds/ui-pen_down.wav";
+			media_name = "x-maemo-touchscreen-pressed";
+		} else {
+			if (event_code != KeyPress)
+				return 1;
+			//volume = priv->volume_key_press;
+			volume = "0";
+			media_path = "/usr/share/sounds/ui-key_press.wav";
+			media_name = "x-maemo-key-pressed";
+		}
+
+		if (!volume)
+			volume = "-25";
+
+		if (event_code == KeyPress && interval <= 100) {
+			vol = strtol(volume, NULL, 10);
+			volume = s;
+			snprintf(s, 10, "%d", vol - 30);
+
+#if 0
+			if (!flag_record_maybe)
+				return 0;
+#endif
+		}
+
+		LOG_VERBOSE1("vol %s, interval %d", volume, interval);
+
+		if (g_str_equal(volume, "-60"))
+			return 0;
+
+		play_failed = ca_context_play(priv->canberra_ctx,
+					      0,
+					      "media.filename",
+					      media_path,
+					      "media.name",
+					      media_name,
+					      "canberra.volume",
+					      volume,
+					      "module-stream-restore.id",
+					      media_name, NULL);
+
+		if (play_failed)
+			LOG_VERBOSE1("failed to play sound %s (%s)", media_path,
+				     ca_strerror(play_failed));
+
+		result = play_failed == 0;
+	} else {
+		LOG_ERROR("priv->canberra_ctx == NULL");
+		result = 0;
+	}
+	return result;
+}
+
 void signal_handler(int signal) {
 	fprintf(stderr, "Signal (%d) received, exiting\n", signal);
 	if (static_priv) {
@@ -261,10 +346,89 @@ void volume_changed_cb(void *data) {
 	(void)priv;
 }
 
-void context_state_callback(pa_context * c, void *userdata) {
-	(void)c;
+void ext_stream_restore_read_cb(struct pa_context *pa_ctx,
+				const struct pa_ext_stream_restore_info *info,
+				int eol, void *userdata) {
+	(void)info;
 	(void)userdata;
-	return;
+	if (eol < 0)
+		LOG_VERBOSE1
+		    ("Failed to initialize stream_restore extension: %s",
+		     pa_strerror(pa_context_errno(pa_ctx)));
+}
+
+void ext_stream_restore_subscribe_cb(pa_context * pa_ctx, void *userdata) {
+	struct private_data *priv = userdata;
+	(void)pa_ctx;
+	pa_operation *operation;
+
+	//operation = pa_ext_stream_restore2_read(*priv->pa_ctx,
+	//                               ext_stream_restore_read_cb, priv);
+	// XXX: pa_ext_stream_restore2_read is maemo specific - why?
+	operation = pa_ext_stream_restore_read(priv->pa_ctx,
+					       ext_stream_restore_read_cb,
+					       priv);
+	if (operation) {
+		pa_operation_unref(operation);
+	} else
+		LOG_VERBOSE("pa_ext_stream_restore2_read failed");
+}
+
+void ext_stream_restore_test_cb(pa_context * pa_ctx, unsigned int version,
+				void *userdata) {
+	struct private_data *priv = userdata;
+	pa_operation *pa_operation;
+
+	LOG_VERBOSE1("ext-stream-restore-version: %u", version);
+	//pa_operation = pa_ext_stream_restore2_read(pa_ctx, ext_stream_restore_read_cb, priv);
+	// XXX: pa_ext_stream_restore2_read is maemo specific - why?
+	pa_operation =
+	    pa_ext_stream_restore_read(pa_ctx, ext_stream_restore_read_cb,
+				       priv);
+	if (pa_operation) {
+		pa_operation_unref(pa_operation);
+		pa_ext_stream_restore_set_subscribe_cb(pa_ctx,
+						       ext_stream_restore_subscribe_cb,
+						       priv);
+
+		pa_operation =
+		    pa_ext_stream_restore_subscribe(pa_ctx, 1, 0, NULL);
+		if (pa_operation)
+			pa_operation_unref(pa_operation);
+	}
+	volume_changed_cb(priv);
+}
+
+void context_state_callback(pa_context * pactx, struct private_data *priv) {
+	pa_context_state_t pa_ctx_state;
+	pa_operation *pa_operation;
+
+	if (!pactx) {
+		LOG_ERROR("pactx is NULL");
+	}
+
+	priv->pa_ctx_state = pa_context_get_state(pactx);
+	pa_ctx_state = pa_context_get_state(pactx);
+	if (pa_ctx_state > 3) {
+		if (pa_ctx_state == PA_CONTEXT_READY) {
+			pa_operation =
+			    pa_ext_stream_restore_test(pactx,
+						       ext_stream_restore_test_cb,
+						       priv);
+
+			if (pa_operation) {
+				pa_operation_unref(pa_operation);
+			} else
+				LOG_VERBOSE1
+				    ("Failed to initialized stream_restore extension: %s",
+				     pa_strerror(pa_context_errno(pactx)));
+
+		} else {
+			mis_pulse_exit(priv);
+			priv->sound_not_ready = 1;
+			g_timeout_add_seconds(2, call_mis_pulse_init, priv);
+		}
+	}
 }
 
 void vibration_changed_notifier(GConfClient * client, guint cnxn_id,
@@ -401,12 +565,14 @@ void xrec_data_cb(XPointer data, XRecordInterceptData * recdat) {
 
 	if (xrd[0] == ButtonPress && verbose) {
 		LOG_VERBOSE1("X ButtonPress %d\n", xrd[1]);
+		sound_play(priv, ButtonPress, diff_ms);
 	}
 	if (xrd[0] == MotionNotify && verbose) {
 		LOG_VERBOSE1("X MotionNotify %d\n", xrd[1]);
 	}
 	if (xrd[0] == KeyPress && verbose) {
 		LOG_VERBOSE1("X KeyPress %d\n", xrd[1]);
+		sound_play(priv, KeyPress, diff_ms);
 	}
 	// if sounds enabled, or this is not a button, play sounds
 	//if (priv->policy_state & 0xFFFFFF8) || !is_button)

@@ -10,6 +10,7 @@
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
 #include <pulse/pulseaudio.h>
+#include <pulse/ext-stream-restore.h>
 #include <pulse/glib-mainloop.h>
 #include <canberra.h>
 #include <X11/Xlib.h>
@@ -46,9 +47,11 @@ struct private_data {
 	pa_context *pa_ctx;
 	GHook *volume_changed_hook;
 	pa_context_state_t pa_ctx_state;
+	int sound_not_ready;
 	GConfClient *gconf_client;
 	int touch_vibration_enabled;
-
+	char *volume_pen_down;
+	char *volume_key_press;
 	GHookList g_hook_list;
 };
 
@@ -58,6 +61,7 @@ void mis_vibra_init(struct private_data *priv);
 void mis_vibra_exit(struct private_data *priv);
 void mis_mce_init(struct private_data *priv);
 void mis_mce_exit(struct private_data *priv);
+int call_mis_pulse_init(gpointer data);
 void mis_pulse_init(struct private_data *priv);
 void mis_pulse_exit(struct private_data *priv);
 void mis_profile_init(struct private_data *priv);
@@ -69,7 +73,14 @@ int sound_init(struct private_data *priv);
 
 void signal_handler(int signal);
 
-void context_state_callback(pa_context * c, void *userdata);
+void ext_stream_restore_read_cb(struct pa_context *pa_ctx,
+				const struct pa_ext_stream_restore_info *info,
+				int eol, void *userdata);
+void ext_stream_restore_subscribe_cb(pa_context * pa_ctx, void *userdata);
+void ext_stream_restore_test_cb(pa_context * pa_ctx, unsigned int version,
+				void *userdata);
+
+void context_state_callback(pa_context * pactx, struct private_data *priv);
 void volume_changed_cb(void *data);
 DBusHandlerResult mis_dbus_mce_filter(DBusConnection * conn, DBusMessage * msg,
 				      void *data);
