@@ -20,6 +20,7 @@ Depends:
  ${shlibs:Depends},
  ${misc:Depends},
  hildon-control-panel (>= 1:2.2.1),
+ libcanberra-pulse,
 Provides:
  theme-config,
  theme-default-settings,
