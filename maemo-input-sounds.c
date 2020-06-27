@@ -140,6 +140,7 @@ void mis_pulse_init(struct private_data *priv) {
 			priv->volume_changed_hook->func = volume_changed_cb;
 			g_hook_insert_before(&priv->g_hook_list,
 					     0, priv->volume_changed_hook);
+			LOG_VERBOSE("Initialised pulseaudio");
 			return;
 		}
 
@@ -148,7 +149,20 @@ void mis_pulse_init(struct private_data *priv) {
 }
 
 void mis_pulse_exit(struct private_data *priv) {
-	(void)priv;
+	if (!priv) {
+		LOG_ERROR("priv == NULL");
+	}
+
+	if (priv->pa_ctx) {
+		pa_context_unref(priv->pa_ctx);
+		priv->pa_ctx = NULL;
+	}
+
+	if (priv->volume_changed_hook) {
+		g_hook_destroy_link(&priv->g_hook_list,
+				    priv->volume_changed_hook);
+		priv->volume_changed_hook = NULL;
+	}
 }
 
 void mis_profile_init(struct private_data *priv) {
