@@ -1,5 +1,5 @@
 # XXX/FIXME/TODO: honour debian cflags too
-CFLAGS = -Wall -Werror -Wextra -std=gnu99 -O2 -ggdb -g
+CFLAGS = -Wall -Werror -Wextra -std=gnu99 -O2 -ggdb -g -Wno-format-truncation -Wno-stringop-overflow
 # CFLAGS += $(CFLAGS) -ggdb -g
 
 bin_PROGRAMS = maemo-xinput-sounds
