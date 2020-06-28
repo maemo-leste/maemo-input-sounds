@@ -1,3 +1,5 @@
+#ifndef __MAEMO_INPUT_SOUNDS_H_
+#define __MAEMO_INPUT_SOUNDS_H_
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
@@ -37,6 +39,7 @@
 
 struct private_data {
 	GMainLoop *loop;
+	//char foo[8];
 	Display *display;
 	Display *display_thread;
 	XRecordContext recordcontext;
@@ -45,7 +48,7 @@ struct private_data {
 	char *canberra_device_name;
 	struct timespec last_event_ts;
 	int mce_tklock_state;
-	DBusConnection* bus;
+	DBusConnection *bus;
 	pb_playback_t *playback;
 	DBusConnection *dbus_system;
 	pa_context *pa_ctx;
@@ -74,6 +77,8 @@ void mis_policy_init(struct private_data *priv);
 void mis_policy_exit(struct private_data *priv);
 
 int sound_init(struct private_data *priv);
+int sound_exit(struct private_data *priv);
+int sound_play(struct private_data *priv, int event_code, signed int interval);
 
 void signal_handler(int signal);
 
@@ -88,8 +93,12 @@ void context_state_callback(pa_context * pactx, struct private_data *priv);
 void volume_changed_cb(void *data);
 DBusHandlerResult mis_dbus_mce_filter(DBusConnection * conn, DBusMessage * msg,
 				      void *data);
-static void mis_request_state(void *data, int state);
+void mis_request_state(void *data, int state);
 void mis_vibra_set_state(void *data, int state);
 int xerror_handler(Display * display, XErrorEvent * ev);
 void xrec_data_cb(XPointer data, XRecordInterceptData * recdat);
 void *xrec_thread(void *data);
+
+extern int verbose;
+
+#endif				/* __MAEMO_INPUT_SOUNDS_H_ */
