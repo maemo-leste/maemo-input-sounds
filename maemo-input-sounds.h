@@ -12,6 +12,7 @@
 #include <pulse/pulseaudio.h>
 #include <pulse/ext-stream-restore.h>
 #include <pulse/glib-mainloop.h>
+#include <libplayback/playback.h>
 #include <canberra.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/record.h>
@@ -43,6 +44,9 @@ struct private_data {
 	ca_context *canberra_ctx;
 	char *canberra_device_name;
 	struct timespec last_event_ts;
+	int mce_tklock_state;
+	DBusConnection* bus;
+	pb_playback_t *playback;
 	DBusConnection *dbus_system;
 	pa_context *pa_ctx;
 	GHook *volume_changed_hook;

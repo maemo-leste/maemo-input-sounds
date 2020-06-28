@@ -11,6 +11,8 @@ Build-Depends:
  libx11-dev,
  maemo-system-services-dev,
  libpulse-dev,
+ libcanberra-dev,
+ libplayback-dev,
 Standards-Version: 3.7.2
 Section: libs
 
@@ -21,6 +23,7 @@ Depends:
  ${misc:Depends},
  hildon-control-panel (>= 1:2.2.1),
  libcanberra-pulse,
+ libplayback-1-0,
 Provides:
  theme-config,
  theme-default-settings,
