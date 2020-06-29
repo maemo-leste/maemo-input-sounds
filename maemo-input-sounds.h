@@ -100,5 +100,6 @@ void xrec_data_cb(XPointer data, XRecordInterceptData * recdat);
 void *xrec_thread(void *data);
 
 extern int verbose;
+extern int delay_filter;
 
 #endif				/* __MAEMO_INPUT_SOUNDS_H_ */
