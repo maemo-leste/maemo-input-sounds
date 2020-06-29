@@ -3,6 +3,7 @@
 static struct private_data *static_priv = NULL;
 
 int verbose = 0;
+int delay_filter = 33;
 
 void signal_handler(int signal) {
 	fprintf(stderr, "Signal (%d) received, exiting\n", signal);
@@ -14,19 +15,19 @@ void signal_handler(int signal) {
 }
 
 int main(int argc, char **argv) {
-	(void)argc;
-	(void)argv;
-
 	struct private_data priv;
 
 	struct option options;
 	int opt;
 
+	char *endptr = NULL;
+	char *filter = NULL;
+
 	memset(&priv, 0, sizeof(struct private_data));
 
 	while (1) {
 		//opt = getopt_long(argc, argv, "d:f:vhr", &options, NULL);
-		opt = getopt_long(argc, argv, "d:v", &options, NULL);
+		opt = getopt_long(argc, argv, "d:f:v", &options, NULL);
 		if (opt == -1)
 			break;
 		switch (opt) {
@@ -36,11 +37,21 @@ int main(int argc, char **argv) {
 		case 'd':
 			priv.canberra_device_name = optarg;
 			break;
+		case 'f':
+			filter = optarg;
+			break;
 		default:
 			/* TODO: print help */
 			LOG_ERROR("Invalid option");
 			return 1;
 		}
+	}
+
+	strtol(filter, &endptr, 10);
+	if (endptr && *endptr) {
+		LOG_VERBOSE1
+		    ("Invalid filter threshold %s, using the default %d.",
+		     filter, delay_filter);
 	}
 
 	g_hook_list_init(&priv.g_hook_list, sizeof(GHook));

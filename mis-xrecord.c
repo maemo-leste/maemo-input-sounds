@@ -36,7 +36,7 @@ void xrec_data_cb(XPointer data, XRecordInterceptData * recdat) {
 	    (1000 * (ts.tv_sec - priv->last_event_ts.tv_sec)) +
 	    (ts.tv_nsec - priv->last_event_ts.tv_nsec)
 	    / 1000000;
-	if (diff_ms < 33) {
+	if (diff_ms < delay_filter) {
 		goto done;
 	}
 
