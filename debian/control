@@ -12,7 +12,7 @@ Build-Depends:
  maemo-system-services-dev,
  libpulse-dev,
  libcanberra-dev,
- libplayback-dev,
+ libplayback-1-dev,
 Standards-Version: 3.7.2
 Section: libs
 
