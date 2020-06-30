@@ -13,6 +13,8 @@ void xrec_data_cb(XPointer data, XRecordInterceptData * recdat) {
 	struct private_data *priv = (void *)data;
 	int diff_ms;
 	struct timespec ts;
+	int keyev, val;
+	int device_state;
 
 	unsigned char *xrd = recdat->data;
 
@@ -42,24 +44,42 @@ void xrec_data_cb(XPointer data, XRecordInterceptData * recdat) {
 
 	priv->last_event_ts = ts;
 
-	if (xrd[0] == ButtonPress && verbose) {
-		LOG_VERBOSE1("X ButtonPress %d\n", xrd[1]);
-		sound_play(priv, ButtonPress, diff_ms);
-	}
-	if (xrd[0] == MotionNotify && verbose) {
-		LOG_VERBOSE1("X MotionNotify %d\n", xrd[1]);
-	}
-	if (xrd[0] == KeyPress && verbose) {
-		LOG_VERBOSE1("X KeyPress %d\n", xrd[1]);
-		sound_play(priv, KeyPress, diff_ms);
-	}
-	// if sounds enabled, or this is not a button, play sounds
-	//if (priv->policy_state & 0xFFFFFF8) || !is_button)
+	keyev = xrd[0];
+	val = xrd[1];
 
-	if (priv->touch_vibration_enabled && xrd[0] == ButtonPress) {
+	if (keyev == ButtonPress && verbose) {
+		LOG_VERBOSE1("X ButtonPress %d\n", val);
+	}
+	if (keyev == MotionNotify && verbose) {
+		LOG_VERBOSE1("X MotionNotify %d\n", val);
+	}
+	if (keyev == KeyPress && verbose) {
+		LOG_VERBOSE1("X KeyPress %d\n", val);
+	}
+
+	int is_button = keyev == ButtonPress || keyev == MotionNotify;
+	int is_key = keyev == KeyPress;
+
+	device_state = priv->device_state;
+
+	if (priv->touch_vibration_enabled && is_button) {
+		/* We do this regardless of lock mode */
 		mis_vibra_set_state(data, 1);
-	} else if (priv->touch_vibration_enabled && xrd[0] == MotionNotify) {
-		mis_vibra_set_state(data, 1);
+	}
+
+	LOG_VERBOSE1("device_state = 0x%x", device_state);
+	if (!device_state) {
+		LOG_VERBOSE("unlocked mask set in device_state");
+		if (is_key) {
+			// XXX: Not sure if we want to handle these keys separately
+			// (q,o,t,r)?
+			if (diff_ms > 99 || (val == 111) || (val == 113)
+			    || (val == 114) || (val == 116)) {
+				sound_play(priv, KeyPress, diff_ms);
+			}
+		} else if (is_button) {
+			sound_play(priv, ButtonPress, diff_ms);
+		}
 	}
 
  done:
@@ -82,7 +102,7 @@ void *xrec_thread(void *data) {
 
 	XSetErrorHandler(xerror_handler);
 	if (!XRecordQueryVersion(priv->display_thread, &major, &minor)) {
-		LOG_ERROR("X Record Extension now available.");
+		LOG_ERROR("X Record Extension not available.");
 		exit(1);
 	}
 
@@ -90,9 +110,15 @@ void *xrec_thread(void *data) {
 
 	ranges[0] = XRecordAllocRange();
 	ranges[1] = XRecordAllocRange();
+#if 0
 	ranges[2] = XRecordAllocRange();
+#endif
 
+#if 0
 	if (!ranges[0] || !ranges[1] || !ranges[2]) {
+#else
+	if (!ranges[0] || !ranges[1]) {
+#endif
 		LOG_ERROR("failed to allocate X Record Range");
 	}
 
@@ -101,12 +127,18 @@ void *xrec_thread(void *data) {
 	ranges[0]->device_events.last = KeyPress;
 	ranges[1]->device_events.first = ButtonPress;
 	ranges[1]->device_events.last = ButtonPress;
-	ranges[2]->device_events.first = MotionNotify;
-	ranges[2]->device_events.last = MotionNotify;
+#if 0
+	//ranges[2]->device_events.first = MotionNotify;
+	//ranges[2]->device_events.last = MotionNotify;
+#endif
 	spec = XRecordAllClients;
 
 	priv->recordcontext =
+	    XRecordCreateContext(priv->display_thread, 0, &spec, 1, ranges, 2);
+#if 0
+	priv->recordcontext =
 	    XRecordCreateContext(priv->display_thread, 0, &spec, 1, ranges, 3);
+#endif
 	if (!priv->recordcontext) {
 		LOG_ERROR("failed to create X Record Context");
 		exit(1);

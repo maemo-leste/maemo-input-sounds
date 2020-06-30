@@ -5,6 +5,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <libgen.h>
 
 #include <gconf/gconf-client.h>
 #include <glib.h>
@@ -18,6 +19,11 @@
 #include <canberra.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/record.h>
+
+#include <mce/dbus-names.h>
+#include <mce/mode-names.h>
+
+#include <libprofile.h>
 
 #define GCONF_SYSTEM_OSSO_DSM_VIBRA "/system/osso/dsm/vibra"
 #define GCONF_SYSTEM_OSSO_DSM_VIBRA_TS_ENABLED "/system/osso/dsm/vibra/touchscreen_vibra_enabled"
@@ -37,6 +43,19 @@
     } \
 }
 
+// TODO: these masks need to just be bitshifted to create the bitmask
+#define MODE_PROFILE_SILENT 1
+#define MODE_PROFILE_SILENT_MASK 0xFFFFFFE
+
+#define MODE_PLAYBACK_PLAY 4
+#define MODE_PLAYBACK_PLAY_MASK 0xFFFFFFFB
+
+#define MODE_TKLOCK_LOCKED 7
+#define MODE_TKLOCK_LOCKED_MASK 0xFFFFFFF7
+
+#define MODE_TKLOCK_UNLOCKED 8
+#define MODE_TKLOCK_UNLOCKED_MASK 0xFFFFFFF8
+
 struct private_data {
 	GMainLoop *loop;
 	//char foo[8];
@@ -47,7 +66,7 @@ struct private_data {
 	ca_context *canberra_ctx;
 	char *canberra_device_name;
 	struct timespec last_event_ts;
-	int mce_tklock_state;
+	int device_state;
 	DBusConnection *bus;
 	pb_playback_t *playback;
 	DBusConnection *dbus_system;
@@ -82,12 +101,22 @@ int sound_play(struct private_data *priv, int event_code, signed int interval);
 
 void signal_handler(int signal);
 
+void policy_cmd_cb(pb_playback_t * playback, enum pb_state_e req_state,
+		   pb_req_t * ext_req, void *data);
+void policy_hint_cb(pb_playback_t * pb, const int *allowed_states, void *data);
+
 void ext_stream_restore_read_cb(struct pa_context *pa_ctx,
 				const struct pa_ext_stream_restore_info *info,
 				int eol, void *userdata);
 void ext_stream_restore_subscribe_cb(pa_context * pa_ctx, void *userdata);
 void ext_stream_restore_test_cb(pa_context * pa_ctx, unsigned int version,
 				void *userdata);
+
+int get_volume_for_level(int value, char **dest);
+void track_profile_cb(const char *profile, void *data);
+void track_value_cb(const char *profile, const char *key, const char *val,
+		    const char *type, void *data);
+void profile_null_callback(void *data);
 
 void context_state_callback(pa_context * pactx, struct private_data *priv);
 void volume_changed_cb(void *data);

@@ -55,7 +55,7 @@ void vibration_changed_notifier(GConfClient * client, guint cnxn_id,
 	const char *gconf_key;
 
 	if (!priv) {
-		LOG_ERROR("no priv");
+		LOG_ERROR("priv == NULL");
 		return;
 	}
 
@@ -79,7 +79,7 @@ void vibration_changed_notifier(GConfClient * client, guint cnxn_id,
 	}
 }
 
-void mis_request_state(void *data, int state) {
+void mis_request_state(void *data, int enabled) {
 	struct private_data *priv = (void *)data;
 	DBusMessage *msg;
 
@@ -94,15 +94,14 @@ void mis_request_state(void *data, int state) {
 		return;
 	}
 
-	const char *method_name = "req_vibrator_pattern_activate";
-	if (!state) {
-		method_name = "req_vibrator_pattern_deactivate";
+	const char *method_name = MCE_ACTIVATE_VIBRATOR_PATTERN;
+	if (!enabled) {
+		method_name = MCE_DEACTIVATE_VIBRATOR_PATTERN;
 	}
 
 	msg =
-	    dbus_message_new_method_call("com.nokia.mce",
-					 "/com/nokia/mce/request",
-					 "com.nokia.mce.request", method_name);
+	    dbus_message_new_method_call(MCE_SERVICE, MCE_REQUEST_PATH,
+					 MCE_REQUEST_IF, method_name);
 	if (!msg) {
 		LOG_ERROR("unable to create dbus message");
 		return;
@@ -114,7 +113,7 @@ void mis_request_state(void *data, int state) {
 	dbus_connection_flush(priv->dbus_system);
 	dbus_message_unref(msg);
 
-	LOG_VERBOSE1("request_state: %d", state);
+	LOG_VERBOSE1("request_enabled: %d", enabled);
 }
 
 void mis_vibra_set_state(void *data, int state) {

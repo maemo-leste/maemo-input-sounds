@@ -65,10 +65,9 @@ void mis_pulse_init(struct private_data *priv) {
 			g_hook_insert_before(&priv->g_hook_list,
 					     0, priv->volume_changed_hook);
 			LOG_VERBOSE("Initialised pulseaudio");
-			return;
+		} else {
+			LOG_ERROR("Unable to set volume_changed_hook");
 		}
-
-		LOG_ERROR("Unable to set volume_changed_hook");
 	}
 }
 
@@ -143,7 +142,6 @@ void ext_stream_restore_test_cb(pa_context * pa_ctx, unsigned int version,
 }
 
 void context_state_callback(pa_context * pactx, struct private_data *priv) {
-	pa_context_state_t pa_ctx_state;
 	pa_operation *pa_operation;
 
 	if (!pactx) {
@@ -151,9 +149,11 @@ void context_state_callback(pa_context * pactx, struct private_data *priv) {
 	}
 
 	priv->pa_ctx_state = pa_context_get_state(pactx);
-	pa_ctx_state = pa_context_get_state(pactx);
-	if (pa_ctx_state > 3) {
-		if (pa_ctx_state == PA_CONTEXT_READY) {
+
+	/* basically, anything < PA_CONTEXT_READY means we need to wait for pulse to
+	 * fully init */
+	if (priv->pa_ctx_state > PA_CONTEXT_SETTING_NAME) {
+		if (priv->pa_ctx_state == PA_CONTEXT_READY) {
 			pa_operation =
 			    pa_ext_stream_restore_test(pactx,
 						       ext_stream_restore_test_cb,
