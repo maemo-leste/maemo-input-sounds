@@ -176,6 +176,80 @@ void context_state_callback(pa_context * pactx, struct private_data *priv) {
 
 void volume_changed_cb(void *data) {
 	struct private_data *priv = (void *)data;
-	/* TODO */
-	(void)priv;
+	pa_operation *pa_op;
+	pa_ext_stream_restore_info key_info;
+	pa_ext_stream_restore_info ts_info;
+	pa_ext_stream_restore_info *pa_restore_info[2];
+	//pa_ext_stream_restore2_info key_info;
+	//pa_ext_stream_restore2_info ts_info;
+	//pa_ext_stream_restore2_info *pa_restore_info[2];
+
+	if (!priv) {
+		LOG_ERROR("priv == NULL");
+		return;
+	}
+
+	LOG_VERBOSE("Volume changed, updating rules");
+
+	pa_restore_info[0] = &key_info;
+	pa_restore_info[1] = &ts_info;
+
+	if ((mis_fill_info
+	     (&key_info, "x-maemo-key-pressed", priv->volume_key_press) < 0)
+	    ||
+	    (mis_fill_info
+	     (&ts_info, "x-maemo-touchscreen-pressed",
+	      priv->volume_pen_down) < 0)) {
+		LOG_VERBOSE("Cannot fill volume from stream-restore");
+		return;
+	}
+	//pa_op = pa_ext_stream_restore2_write
+	pa_op = pa_ext_stream_restore_write(priv->pa_ctx, PA_UPDATE_REPLACE,
+					    *pa_restore_info, 2, 1, NULL, NULL);
+	if (pa_op)
+		pa_operation_unref(pa_op);
+	else
+		LOG_VERBOSE("pa_ext_stream_restore_write() failed");
+
+}
+
+int mis_fill_info(pa_ext_stream_restore_info * info, char *rule,
+		  const char *volume_str) {
+	double volume;
+	pa_volume_t pa_vol_sw;
+	int mute;
+	pa_cvolume pa_volume;
+
+	if (!info) {
+		LOG_ERROR("info == NULL");
+		return -1;
+	}
+
+	if (!rule) {
+		LOG_ERROR("rule == NULL");
+		return -1;
+	}
+
+	if (!volume_str)
+		volume_str = "-25";
+
+	errno = 0;
+	volume = strtod(volume_str, NULL);
+	if (errno != 0) {
+		LOG_VERBOSE("Invalid volume");
+		return -1;
+	} else {
+		pa_cvolume_init(&pa_volume);
+		pa_vol_sw = pa_sw_volume_from_dB(volume);
+		pa_cvolume_set(&pa_volume, 1u, pa_vol_sw);
+		info->channel_map.channels = 1;
+		info->name = rule;
+		info->channel_map.map[0] = 0;
+		memcpy(&info->volume, &pa_volume, sizeof(pa_cvolume));
+		mute = info->mute & 0xFE;
+		info->device = NULL;
+		info->mute = mute | 2;
+	}
+
+	return 0;
 }

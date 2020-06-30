@@ -5,6 +5,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <errno.h>
 #include <libgen.h>
 
 #include <gconf/gconf-client.h>
@@ -111,6 +112,9 @@ void ext_stream_restore_read_cb(struct pa_context *pa_ctx,
 void ext_stream_restore_subscribe_cb(pa_context * pa_ctx, void *userdata);
 void ext_stream_restore_test_cb(pa_context * pa_ctx, unsigned int version,
 				void *userdata);
+void volume_changed_cb(void *data);
+int mis_fill_info(pa_ext_stream_restore_info * info, char *rule,
+		  const char *volume_str);
 
 int get_volume_for_level(int value, char **dest);
 void track_profile_cb(const char *profile, void *data);
