@@ -14,10 +14,18 @@ void signal_handler(int signal) {
 	}
 }
 
+void print_help(char *program_name, int exit_code) {
+	char *progname;
+
+	progname = basename(program_name);
+	printf("usage: %s [-r] [-d device] [-f filter] [-h] [-v]\n", progname);
+	// TODO [-r]
+	exit(exit_code);
+}
+
 int main(int argc, char **argv) {
 	struct private_data priv;
 
-	struct option options;
 	int opt;
 
 	char *endptr = NULL;
@@ -26,8 +34,9 @@ int main(int argc, char **argv) {
 	memset(&priv, 0, sizeof(struct private_data));
 
 	while (1) {
-		//opt = getopt_long(argc, argv, "d:f:vhr", &options, NULL);
-		opt = getopt_long(argc, argv, "d:f:v", &options, NULL);
+		//opt = getopt_long(argc, argv, "d:f:vhr", NULL, NULL);
+		opt = getopt_long(argc, argv, "d:f:vh", NULL, NULL);
+		// TODO -r
 		if (opt == -1)
 			break;
 		switch (opt) {
@@ -40,18 +49,22 @@ int main(int argc, char **argv) {
 		case 'f':
 			filter = optarg;
 			break;
+		case 'h':
+			print_help(argv[0], 0);
+			break;
 		default:
 			/* TODO: print help */
-			LOG_ERROR("Invalid option");
-			return 1;
+			print_help(argv[0], 1);
 		}
 	}
 
-	strtol(filter, &endptr, 10);
-	if (endptr && *endptr) {
-		LOG_VERBOSE1
-		    ("Invalid filter threshold %s, using the default %d.",
-		     filter, delay_filter);
+	if (filter) {
+		strtol(filter, &endptr, 10);
+		if (endptr && *endptr) {
+			LOG_VERBOSE1
+			    ("Invalid filter threshold %s, using the default %d.",
+			     filter, delay_filter);
+		}
 	}
 
 	g_hook_list_init(&priv.g_hook_list, sizeof(GHook));
