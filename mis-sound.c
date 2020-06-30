@@ -74,6 +74,11 @@ int sound_play(struct private_data *priv, int event_code, signed int interval) {
 	int vol;
 	char *s = alloca(sizeof(char) * 16);
 
+	if (!priv) {
+		LOG_ERROR("priv == NULL");
+		return 0;
+	}
+
 	if (priv->pa_ctx_state != PA_CONTEXT_READY)
 		return 0;
 
@@ -82,23 +87,19 @@ int sound_play(struct private_data *priv, int event_code, signed int interval) {
 		sound_init(priv);
 		priv->sound_not_ready = 0;
 	}
+
 	if (priv->canberra_ctx) {
-		// TODO: policy_state / profile state
-#if 0
-		if (*priv->policy_state_maybe)
+		if (priv->device_state)
 			return 0;
-#endif
 
 		if (event_code == ButtonPress) {
-			volume = "0";
-			//volume = priv->volume_pen_down;
+			volume = priv->volume_pen_down;
 			media_path = "/usr/share/sounds/ui-pen_down.wav";
 			media_name = "x-maemo-touchscreen-pressed";
 		} else {
 			if (event_code != KeyPress)
 				return 1;
-			//volume = priv->volume_key_press;
-			volume = "0";
+			volume = priv->volume_key_press;
 			media_path = "/usr/share/sounds/ui-key_press.wav";
 			media_name = "x-maemo-key-pressed";
 		}
@@ -112,6 +113,7 @@ int sound_play(struct private_data *priv, int event_code, signed int interval) {
 			snprintf(s, 10, "%d", vol - 30);
 
 #if 0
+			// XXX
 			if (!flag_record_maybe)
 				return 0;
 #endif

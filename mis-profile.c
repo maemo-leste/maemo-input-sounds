@@ -1,9 +1,9 @@
 #include "maemo-input-sounds.h"
 
 void mis_profile_init(struct private_data *priv) {
-	char *current_profile;	// r0 MAPDST
-	char *keypad_sound_level;	// r0 MAPDST
-	char *touchscreen_sound_level;	// r0 MAPDST
+	char *current_profile;
+	char *keypad_sound_level;
+	char *touchscreen_sound_level;
 
 	if (!priv) {
 		LOG_ERROR("priv == NULL");
