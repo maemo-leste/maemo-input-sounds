@@ -90,7 +90,11 @@ void xrec_data_cb(XPointer data, XRecordInterceptData * recdat) {
 void *xrec_thread(void *data) {
 	struct private_data *priv = data;
 	int major, minor;
+#if 0
 	XRecordRange *ranges[3];
+#else
+	XRecordRange *ranges[2];
+#endif
 	XRecordClientSpec spec;
 
 	priv->display_thread = XOpenDisplay(NULL);
@@ -153,7 +157,9 @@ void *xrec_thread(void *data) {
 
 	XFree(ranges[0]);
 	XFree(ranges[1]);
+#if 0
 	XFree(ranges[2]);
+#endif
 
 	return NULL;
 }
