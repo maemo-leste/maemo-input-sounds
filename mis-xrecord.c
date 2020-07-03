@@ -59,7 +59,7 @@ void xrec_data_cb(XPointer data, XRecordInterceptData * recdat) {
 
 	device_state = priv->device_state;
 
-	if (priv->touch_vibration_enabled && is_button) {
+	if (priv->touch_vibration_enabled && is_button && !(priv->device_state & MODE_TKLOCK_UNLOCKED)){
 		/* We do this regardless of lock mode */
 		mis_vibra_set_state(data, 1);
 	}
