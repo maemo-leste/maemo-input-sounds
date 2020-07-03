@@ -50,14 +50,11 @@ void xrec_data_cb(XPointer data, XRecordInterceptData * recdat) {
 	if (keyev == ButtonPress && verbose) {
 		LOG_VERBOSE1("X ButtonPress %d\n", val);
 	}
-	if (keyev == MotionNotify && verbose) {
-		LOG_VERBOSE1("X MotionNotify %d\n", val);
-	}
 	if (keyev == KeyPress && verbose) {
 		LOG_VERBOSE1("X KeyPress %d\n", val);
 	}
 
-	int is_button = keyev == ButtonPress || keyev == MotionNotify;
+	int is_button = keyev == ButtonPress;
 	int is_key = keyev == KeyPress;
 
 	device_state = priv->device_state;
@@ -90,17 +87,12 @@ void xrec_data_cb(XPointer data, XRecordInterceptData * recdat) {
 void *xrec_thread(void *data) {
 	struct private_data *priv = data;
 	int major, minor;
-#if 0
-	XRecordRange *ranges[3];
-#else
 	XRecordRange *ranges[2];
-#endif
 	XRecordClientSpec spec;
 
 	priv->display_thread = XOpenDisplay(NULL);
 	if (!priv->display_thread) {
-		// TODO fprintf error with macro
-		fprintf(stderr, "xrec_thread failed to open display\n");
+		LOG_VERBOSE("failed to open display");
 		exit(EXIT_FAILURE);
 	}
 
@@ -114,35 +106,19 @@ void *xrec_thread(void *data) {
 
 	ranges[0] = XRecordAllocRange();
 	ranges[1] = XRecordAllocRange();
-#if 0
-	ranges[2] = XRecordAllocRange();
-#endif
 
-#if 0
-	if (!ranges[0] || !ranges[1] || !ranges[2]) {
-#else
 	if (!ranges[0] || !ranges[1]) {
-#endif
 		LOG_ERROR("failed to allocate X Record Range");
 	}
 
-	/* Via uinput-mapper een muis er aan hangen om XRecord te testen */
 	ranges[0]->device_events.first = KeyPress;
 	ranges[0]->device_events.last = KeyPress;
 	ranges[1]->device_events.first = ButtonPress;
 	ranges[1]->device_events.last = ButtonPress;
-#if 0
-	//ranges[2]->device_events.first = MotionNotify;
-	//ranges[2]->device_events.last = MotionNotify;
-#endif
 	spec = XRecordAllClients;
 
 	priv->recordcontext =
 	    XRecordCreateContext(priv->display_thread, 0, &spec, 1, ranges, 2);
-#if 0
-	priv->recordcontext =
-	    XRecordCreateContext(priv->display_thread, 0, &spec, 1, ranges, 3);
-#endif
 	if (!priv->recordcontext) {
 		LOG_ERROR("failed to create X Record Context");
 		exit(1);
@@ -157,9 +133,6 @@ void *xrec_thread(void *data) {
 
 	XFree(ranges[0]);
 	XFree(ranges[1]);
-#if 0
-	XFree(ranges[2]);
-#endif
 
 	return NULL;
 }
