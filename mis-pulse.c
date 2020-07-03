@@ -217,7 +217,6 @@ int mis_fill_info(pa_ext_stream_restore_info * info, char *rule,
 		  const char *volume_str) {
 	double volume;
 	pa_volume_t pa_vol_sw;
-	int mute;
 	pa_cvolume pa_volume;
 
 	if (!info) {
@@ -235,21 +234,21 @@ int mis_fill_info(pa_ext_stream_restore_info * info, char *rule,
 
 	errno = 0;
 	volume = strtod(volume_str, NULL);
+
 	if (errno != 0) {
 		LOG_VERBOSE("Invalid volume");
 		return -1;
-	} else {
-		pa_cvolume_init(&pa_volume);
-		pa_vol_sw = pa_sw_volume_from_dB(volume);
-		pa_cvolume_set(&pa_volume, 1u, pa_vol_sw);
-		info->channel_map.channels = 1;
-		info->name = rule;
-		info->channel_map.map[0] = 0;
-		memcpy(&info->volume, &pa_volume, sizeof(pa_cvolume));
-		mute = info->mute & 0xFE;
-		info->device = NULL;
-		info->mute = mute | 2;
 	}
+
+	pa_cvolume_init(&pa_volume);
+	pa_vol_sw = pa_sw_volume_from_dB(volume);
+	pa_cvolume_set(&pa_volume, 1u, pa_vol_sw);
+	info->channel_map.channels = 1;
+	info->name = rule;
+	info->channel_map.map[0] = 0;
+	memcpy(&info->volume, &pa_volume, sizeof(pa_cvolume));
+	info->device = NULL;
+	info->mute = 0;
 
 	return 0;
 }
