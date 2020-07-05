@@ -14,6 +14,7 @@ Build-Depends:
  libcanberra-dev,
  libplayback-1-dev,
  libprofile-dev,
+ mce-dev,
 Standards-Version: 3.7.2
 Section: libs
 
