@@ -1,3 +1,9 @@
+maemo-input-sounds (1.0.1) unstable; urgency=low
+
+  * Fully featured release
+
+ -- Merlijn Wajer <merlijn@wizzup.org>  Sun, 05 Jul 2020 22:33:27 +0200
+
 maemo-input-sounds (1.0.0) unstable; urgency=low
 
   * Initial Maemo Leste release
