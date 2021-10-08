@@ -54,6 +54,16 @@ void mis_profile_init(struct private_data *priv) {
 	if (touchscreen_sound_level)
 		g_free(touchscreen_sound_level);
 
+	if (profile_has_value("touchscreen.vibration.enabled") != 0) {
+		priv->touch_vibration_enabled = profile_get_value_as_bool(current_profile,
+									"touchscreen.vibration.enabled");
+		LOG_VERBOSE1("touchscreen.vibration.enabled is %s",
+					 priv->touch_vibration_enabled ? "active" : "disabled");
+	} else {
+		LOG_VERBOSE1("no touchscreen.vibration.enabled in profile %s", current_profile);
+		priv->touch_vibration_enabled = 0;
+	}
+
 	g_hook_list_invoke(&priv->g_hook_list, TRUE);
 	g_free(current_profile);
 }
@@ -152,15 +162,18 @@ void track_value_cb(const char *profile, const char *key, const char *val,
 			} else {
 				found = 1;
 			}
-		}
-
-		if (g_str_equal("touchscreen.sound.level", key)) {
+		} else if (g_str_equal("touchscreen.sound.level", key)) {
 			if (get_volume_for_level(*val, &priv->volume_pen_down) <
 			    0) {
 				LOG_VERBOSE1("Invalid %s value", key);
 			} else {
 				found = 1;
 			}
+		} else if (g_str_equal("touchscreen.vibration.enabled", key)) {
+			gchar* current_profile = profile_get_profile();
+			priv->touch_vibration_enabled = profile_get_value_as_bool(current_profile,
+									"touchscreen.vibration.enabled");
+			g_free(current_profile);
 		}
 
 		if (found) {

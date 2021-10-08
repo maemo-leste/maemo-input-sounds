@@ -79,7 +79,6 @@ int main(int argc, char **argv) {
 	mis_profile_init(&priv);
 	mis_pulse_init(&priv);
 	mis_mce_init(&priv);
-	mis_vibra_init(&priv);
 
 	priv.display = XOpenDisplay(NULL);
 	if (!priv.display) {
@@ -117,7 +116,6 @@ int main(int argc, char **argv) {
 	priv.recordcontext = 0;
 	priv.thread = NULL;
 
-	mis_vibra_exit(&priv);
 	mis_mce_exit(&priv);
 	mis_pulse_exit(&priv);
 	mis_profile_exit(&priv);
