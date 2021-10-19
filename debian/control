@@ -3,7 +3,6 @@ Priority: optional
 Maintainer: Merlijn Wajer <merlijn@wizzup.org>
 Build-Depends:
  debhelper (>= 9),
- libgconf2-dev,
  libdbus-1-dev,
  libdbus-glib-1-dev,
  libxtst-dev,
