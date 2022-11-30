@@ -35,7 +35,7 @@ void mis_profile_init(struct private_data *priv) {
 				    &priv->volume_key_press) < 0) {
 		LOG_VERBOSE("Invalid keypad value.")
 	}
-	LOG_VERBOSE1("got kp vol %s", keypad_sound_level);
+	LOG_VERBOSE1("got kp vol %s", keypad_sound_level ? keypad_sound_level : "null");
 
 	if (keypad_sound_level)
 		g_free(keypad_sound_level);
@@ -49,7 +49,7 @@ void mis_profile_init(struct private_data *priv) {
 		LOG_VERBOSE("Invalid touchscreen value");
 	}
 
-	LOG_VERBOSE1("got ts vol: %s", touchscreen_sound_level);
+	LOG_VERBOSE1("got ts vol: %s", touchscreen_sound_level ? touchscreen_sound_level : "null");
 
 	if (touchscreen_sound_level)
 		g_free(touchscreen_sound_level);
