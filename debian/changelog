@@ -1,3 +1,9 @@
+maemo-input-sounds (1.0.3) unstable; urgency=low
+
+  * Fix GCC warnings
+
+ -- Merlijn Wajer <merlijn@wizzup.org>  Thu, 01 Dec 2022 00:45:48 +0100
+
 maemo-input-sounds (1.0.2) unstable; urgency=low
 
   * Update to new profiled vibration key
