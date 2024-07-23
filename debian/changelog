@@ -1,3 +1,13 @@
+maemo-input-sounds (1.0.4) unstable; urgency=low
+
+  * mis-pulse: Do not crash if pa_context_connect() fails
+  * mis-pulse: free pa_proplist, no no matter if we have context or not
+  * mis-sound: fix compiler warning
+  * improve build scripts
+  * mis-pulse: Do not hardcode application.name and application.version
+
+ -- Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>  Tue, 23 Jul 2024 18:21:45 +0300
+
 maemo-input-sounds (1.0.3) unstable; urgency=low
 
   * Fix GCC warnings
