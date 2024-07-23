@@ -1,7 +1,9 @@
 AC_INIT([Maemo Input Sounds],
-        [1.0.0],
+        m4_esyscmd_s([dpkg-parsechangelog | awk '/^Version:/ { print $2 }' | sed 's/\([0-9\.]\+\)-[0-9]\+$/\1/']),
         [merlijn@wizzup.org], [maemo-input-sounds])
 
+AM_CONFIG_HEADER(config.h)
+AC_CONFIG_MACRO_DIRS([m4])
 AM_INIT_AUTOMAKE
 LT_INIT([shared disable-static])
 AC_CONFIG_FILES(Makefile)
