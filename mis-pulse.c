@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include "maemo-input-sounds.h"
 
 int call_mis_pulse_init(gpointer data) {
@@ -36,10 +38,10 @@ void mis_pulse_init(struct private_data *priv) {
 	}
 
 	pa_proplist = pa_proplist_new();
-	pa_proplist_sets(pa_proplist, "application.name", "maemo-input-sounds");
+	pa_proplist_sets(pa_proplist, "application.name", PACKAGE);
 	pa_proplist_sets(pa_proplist, "application.id",
 			 "org.maemo.XInputSounds");
-	pa_proplist_sets(pa_proplist, "application.version", "0.7");
+	pa_proplist_sets(pa_proplist, "application.version", PACKAGE_VERSION);
 	priv->pa_ctx = pa_context_new_with_proplist(api, 0, pa_proplist);
 	pa_proplist_free(pa_proplist);
 
