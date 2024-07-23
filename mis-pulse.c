@@ -52,9 +52,14 @@ void mis_pulse_init(struct private_data *priv) {
 		    (priv->pa_ctx, NULL, PA_CONTEXT_NOAUTOSPAWN, 0) < 0) {
 			if (verbose)
 				LOG_ERROR("Connection failed");
-			pa_context_unref(priv->pa_ctx);
-			priv->pa_ctx = NULL;
+
+			if (priv->pa_ctx) {
+				pa_context_unref(priv->pa_ctx);
+				priv->pa_ctx = NULL;
+			}
+
 			pa_glib_mainloop_free(pa_glib_main);
+			return;
 		}
 
 		priv->volume_changed_hook = g_hook_alloc(&priv->g_hook_list);
