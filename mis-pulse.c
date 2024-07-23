@@ -41,8 +41,9 @@ void mis_pulse_init(struct private_data *priv) {
 			 "org.maemo.XInputSounds");
 	pa_proplist_sets(pa_proplist, "application.version", "0.7");
 	priv->pa_ctx = pa_context_new_with_proplist(api, 0, pa_proplist);
+	pa_proplist_free(pa_proplist);
+
 	if (priv->pa_ctx) {
-		pa_proplist_free(pa_proplist);
 		pa_context_set_state_callback(priv->pa_ctx,
 					      (pa_context_notify_cb_t) &
 					      context_state_callback,
