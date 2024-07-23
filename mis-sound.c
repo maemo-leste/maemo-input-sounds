@@ -110,7 +110,7 @@ int sound_play(struct private_data *priv, int event_code, signed int interval) {
 		if (event_code == KeyPress && interval <= 100) {
 			vol = strtol(volume, NULL, 10);
 			volume = s;
-			snprintf(s, 10, "%d", vol - 30);
+			snprintf(s, 12, "%d", vol - 30);
 
 #if 0
 			// XXX
