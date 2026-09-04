@@ -19,8 +19,7 @@ int sound_init(struct private_data *priv) {
 				      display_name,
 				      "media.language",
 				      "en_EN",
-				      "canberra.cache-control",
-				      "permanent", NULL);
+				      NULL);
 
 	if (ret)
 		LOG_VERBOSE1("failed to change canberra properties: %s",
@@ -124,16 +123,20 @@ int sound_play(struct private_data *priv, int event_code, signed int interval) {
 		if (g_str_equal(volume, "-60"))
 			return 0;
 
-		play_failed = ca_context_play(priv->canberra_ctx,
-					      0,
-					      "media.filename",
+		play_failed = ca_context_play(priv->canberra_ctx, 0,
+					      CA_PROP_MEDIA_FILENAME,
 					      media_path,
-					      "media.name",
+					      CA_PROP_MEDIA_NAME,
 					      media_name,
-					      "canberra.volume",
+					      CA_PROP_EVENT_ID,
+					      media_name,
+					      CA_PROP_CANBERRA_VOLUME,
 					      volume,
 					      "module-stream-restore.id",
-					      media_name, NULL);
+					      media_name,
+					      CA_PROP_CANBERRA_CACHE_CONTROL,
+					      "permanent",
+					      NULL);
 
 		if (play_failed)
 			LOG_VERBOSE1("failed to play sound %s (%s)", media_path,
