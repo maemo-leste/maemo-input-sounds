@@ -18,17 +18,17 @@ void xrec_data_cb(XPointer data, XRecordInterceptData * recdat) {
 
 	unsigned char *xrd = recdat->data;
 
-	if (!priv) {
-		LOG_ERROR("priv == NULL");
-		return;
-	}
-
 	if (!xrd) {
 		LOG_ERROR("xrd == NULL");
 		return;
 	}
 
-	if (recdat->category || !priv->recordcontext) {
+	if (!priv) {
+		LOG_ERROR("priv == NULL");
+		goto done;
+	}
+
+	if (recdat->category != XRecordFromServer || !priv->recordcontext) {
 		goto done;
 	}
 
@@ -36,8 +36,8 @@ void xrec_data_cb(XPointer data, XRecordInterceptData * recdat) {
 
 	diff_ms =
 	    (1000 * (ts.tv_sec - priv->last_event_ts.tv_sec)) +
-	    (ts.tv_nsec - priv->last_event_ts.tv_nsec)
-	    / 1000000;
+	    (ts.tv_nsec - priv->last_event_ts.tv_nsec) / 1000000;
+
 	if (diff_ms < delay_filter) {
 		goto done;
 	}
@@ -48,10 +48,10 @@ void xrec_data_cb(XPointer data, XRecordInterceptData * recdat) {
 	val = xrd[1];
 
 	if (keyev == ButtonPress && verbose) {
-		LOG_VERBOSE1("X ButtonPress %d\n", val);
+		LOG_VERBOSE1("X ButtonPress %d", val);
 	}
-	if (keyev == KeyPress && verbose) {
-		LOG_VERBOSE1("X KeyPress %d\n", val);
+	else if (keyev == KeyPress && verbose) {
+		LOG_VERBOSE1("X KeyPress %d", val);
 	}
 
 	int is_button = keyev == ButtonPress;
@@ -111,10 +111,10 @@ void *xrec_thread(void *data) {
 		LOG_ERROR("failed to allocate X Record Range");
 	}
 
-	ranges[0]->device_events.first = KeyPress;
-	ranges[0]->device_events.last = KeyPress;
-	ranges[1]->device_events.first = ButtonPress;
-	ranges[1]->device_events.last = ButtonPress;
+	ranges[0]->delivered_events.first = KeyPress;
+	ranges[0]->delivered_events.last = KeyPress;
+	ranges[1]->delivered_events.first = ButtonPress;
+	ranges[1]->delivered_events.last = ButtonPress;
 	spec = XRecordAllClients;
 
 	priv->recordcontext =
