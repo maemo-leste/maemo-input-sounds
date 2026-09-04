@@ -1,3 +1,11 @@
+maemo-input-sounds (1.0.5) unstable; urgency=low
+
+  * main: properly process filter argument
+  * xrecord: use delivered_events, not device_events
+  * sound: properly cache media on sound server
+
+ -- Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>  Fri, 04 Sep 2026 05:59:45 +0300
+
 maemo-input-sounds (1.0.4) unstable; urgency=low
 
   * mis-pulse: Do not crash if pa_context_connect() fails
