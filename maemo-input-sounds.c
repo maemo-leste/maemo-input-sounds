@@ -59,12 +59,14 @@ int main(int argc, char **argv) {
 	}
 
 	if (filter) {
-		strtol(filter, &endptr, 10);
+		int new_delay_filter = strtol(filter, &endptr, 10);
+
 		if (endptr && *endptr) {
 			LOG_VERBOSE1
 			    ("Invalid filter threshold %s, using the default %d.",
 			     filter, delay_filter);
-		}
+		} else
+			delay_filter = new_delay_filter;
 	}
 
 	g_hook_list_init(&priv.g_hook_list, sizeof(GHook));
