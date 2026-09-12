@@ -4,6 +4,7 @@ static struct private_data *static_priv = NULL;
 
 int verbose = 0;
 int delay_filter = 33;
+int repeat_sound = 0;
 
 void signal_handler(int signal) {
 	fprintf(stderr, "Signal (%d) received, exiting\n", signal);
@@ -34,9 +35,7 @@ int main(int argc, char **argv) {
 	memset(&priv, 0, sizeof(struct private_data));
 
 	while (1) {
-		//opt = getopt_long(argc, argv, "d:f:vhr", NULL, NULL);
-		opt = getopt_long(argc, argv, "d:f:vh", NULL, NULL);
-		// TODO -r
+		opt = getopt_long(argc, argv, "d:f:vhr", NULL, NULL);
 		if (opt == -1)
 			break;
 		switch (opt) {
@@ -51,6 +50,9 @@ int main(int argc, char **argv) {
 			break;
 		case 'h':
 			print_help(argv[0], 0);
+			break;
+		case 'r':
+			repeat_sound = 1;
 			break;
 		default:
 			/* TODO: print help */

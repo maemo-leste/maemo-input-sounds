@@ -70,8 +70,7 @@ int sound_play(struct private_data *priv, int event_code, signed int interval) {
 	const char *media_path;
 	const char *media_name;
 	int play_failed;
-	int vol;
-	char *s = alloca(sizeof(char) * 16);
+	char tmp[16];
 
 	if (!priv) {
 		LOG_ERROR("priv == NULL");
@@ -95,33 +94,31 @@ int sound_play(struct private_data *priv, int event_code, signed int interval) {
 			volume = priv->volume_pen_down;
 			media_path = "/usr/share/sounds/ui-pen_down.wav";
 			media_name = "x-maemo-touchscreen-pressed";
-		} else {
-			if (event_code != KeyPress)
-				return 1;
+		} else if(event_code == KeyPress) {
+			if (interval <= 100 && !repeat_sound)
+				return 0;
+
 			volume = priv->volume_key_press;
 			media_path = "/usr/share/sounds/ui-key_press.wav";
 			media_name = "x-maemo-key-pressed";
-		}
+		} else
+			return 1;
 
 		if (!volume)
 			volume = "-25";
 
-		if (event_code == KeyPress && interval <= 100) {
-			vol = strtol(volume, NULL, 10);
-			volume = s;
-			snprintf(s, 12, "%d", vol - 30);
+		if (g_str_equal(volume, "-60"))
+			return 0;
 
-#if 0
-			// XXX
-			if (!flag_record_maybe)
-				return 0;
-#endif
+		/* autorepeat */
+		if (event_code == KeyPress && interval <= 100) {
+			volume = tmp;
+			snprintf(tmp, sizeof(tmp), "%ld",
+				 strtol(volume, NULL, 10) - 30);
+
 		}
 
 		LOG_VERBOSE1("vol %s, interval %d", volume, interval);
-
-		if (g_str_equal(volume, "-60"))
-			return 0;
 
 		play_failed = ca_context_play(priv->canberra_ctx, 0,
 					      CA_PROP_MEDIA_FILENAME,

@@ -124,5 +124,6 @@ void *xrec_thread(void *data);
 
 extern int verbose;
 extern int delay_filter;
+extern int repeat_sound;
 
 #endif				/* __MAEMO_INPUT_SOUNDS_H_ */
