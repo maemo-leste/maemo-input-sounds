@@ -1,3 +1,9 @@
+maemo-input-sounds (1.0.6) unstable; urgency=low
+
+  * do not play repeat sound if key sounds are disabled
+
+ -- Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>  Sat, 12 Sep 2026 07:23:33 +0300
+
 maemo-input-sounds (1.0.5) unstable; urgency=low
 
   * main: properly process filter argument
