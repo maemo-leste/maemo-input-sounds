@@ -113,8 +113,8 @@ int sound_play(struct private_data *priv, int event_code, signed int interval) {
 		/* autorepeat */
 		if (event_code == KeyPress && interval <= 100) {
 			volume = tmp;
-			snprintf(tmp, sizeof(tmp), "%ld",
-				 strtol(volume, NULL, 10) - 30);
+			snprintf(tmp, sizeof(tmp), "%d",
+				 (int)strtol(volume, NULL, 10) - 30);
 
 		}
 
