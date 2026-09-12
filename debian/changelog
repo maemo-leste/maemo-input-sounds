@@ -1,4 +1,4 @@
-maemo-input-sounds (1.0.6) unstable; urgency=low
+maemo-input-sounds (1.0.7) unstable; urgency=low
 
   * do not play repeat sound if key sounds are disabled
 
