@@ -129,8 +129,13 @@ int sound_play(struct private_data *priv, int event_code, signed int interval) {
 					      media_name,
 					      CA_PROP_CANBERRA_VOLUME,
 					      volume,
-					      "module-stream-restore.id",
-					      media_name,
+					      /* The level above is the level this click is heard
+					       * at wherever the media slider sits, which is what the
+					       * flag tells the volume policy to mean.  It replaces
+					       * the stream-restore entry this used to publish in
+					       * order to carry the same value. */
+					      "x-maemo.volume.absolute",
+					      "1",
 					      CA_PROP_CANBERRA_CACHE_CONTROL,
 					      "permanent",
 					      NULL);

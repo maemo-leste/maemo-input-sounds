@@ -67,13 +67,11 @@ struct private_data {
 	pb_playback_t *playback;
 	DBusConnection *dbus_system;
 	pa_context *pa_ctx;
-	GHook *volume_changed_hook;
 	pa_context_state_t pa_ctx_state;
 	int sound_not_ready;
 	int touch_vibration_enabled;
 	char *volume_pen_down;
 	char *volume_key_press;
-	GHookList g_hook_list;
 };
 
 void mis_mce_init(struct private_data *priv);
@@ -96,15 +94,6 @@ void policy_cmd_cb(pb_playback_t * playback, enum pb_state_e req_state,
 		   pb_req_t * ext_req, void *data);
 void policy_hint_cb(pb_playback_t * pb, const int *allowed_states, void *data);
 
-void ext_stream_restore_read_cb(struct pa_context *pa_ctx,
-				const struct pa_ext_stream_restore_info *info,
-				int eol, void *userdata);
-void ext_stream_restore_subscribe_cb(pa_context * pa_ctx, void *userdata);
-void ext_stream_restore_test_cb(pa_context * pa_ctx, unsigned int version,
-				void *userdata);
-void volume_changed_cb(void *data);
-int mis_fill_info(pa_ext_stream_restore_info * info, char *rule,
-		  const char *volume_str);
 
 int get_volume_for_level(int value, char **dest);
 void track_profile_cb(const char *profile, void *data);
@@ -113,7 +102,6 @@ void track_value_cb(const char *profile, const char *key, const char *val,
 void profile_null_callback(void *data);
 
 void context_state_callback(pa_context * pactx, struct private_data *priv);
-void volume_changed_cb(void *data);
 DBusHandlerResult mis_dbus_mce_filter(DBusConnection * conn, DBusMessage * msg,
 				      void *data);
 void mis_request_state(void *data, int state);

@@ -64,7 +64,6 @@ void mis_profile_init(struct private_data *priv) {
 		priv->touch_vibration_enabled = 0;
 	}
 
-	g_hook_list_invoke(&priv->g_hook_list, TRUE);
 	g_free(current_profile);
 }
 
@@ -176,12 +175,7 @@ void track_value_cb(const char *profile, const char *key, const char *val,
 			g_free(current_profile);
 		}
 
-		if (found) {
-			g_hook_list_invoke(&priv->g_hook_list, TRUE);
-			return;
-		} else {
-			return;
-		}
+		return;
 
 	}
 }

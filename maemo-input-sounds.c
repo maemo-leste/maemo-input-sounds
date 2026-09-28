@@ -71,7 +71,6 @@ int main(int argc, char **argv) {
 			delay_filter = new_delay_filter;
 	}
 
-	g_hook_list_init(&priv.g_hook_list, sizeof(GHook));
 	priv.loop = g_main_loop_new(NULL, 0);
 	if (priv.loop == NULL) {
 		// TODO: fprintf error with macro
@@ -126,7 +125,6 @@ int main(int argc, char **argv) {
 	mis_policy_exit(&priv);
 
 	g_main_loop_unref(priv.loop);
-	g_hook_list_clear(&priv.g_hook_list);
 
 	return EXIT_SUCCESS;
 }
