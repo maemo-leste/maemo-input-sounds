@@ -61,8 +61,21 @@ void mis_pulse_init(struct private_data *priv) {
 		if (verbose)
 			LOG_ERROR("Connection failed");
 
-		pa_context_unref(priv->pa_ctx);
-		priv->pa_ctx = NULL;
+		/* A failed connect drives the state callback synchronously, and
+		 * that path already releases the context through
+		 * mis_pulse_exit() and clears priv->pa_ctx.  Unreferring
+		 * unconditionally here hands pa_context_unref() a NULL pointer,
+		 * which it asserts on and takes the process down -- which is
+		 * what happened whenever the server was not up yet.  Only
+		 * release it if the callback has not already done so, and retry
+		 * on the same cadence the callback would have used, since a
+		 * server that is merely late needs another chance. */
+		if (priv->pa_ctx) {
+			pa_context_unref(priv->pa_ctx);
+			priv->pa_ctx = NULL;
+			priv->sound_not_ready = 1;
+			g_timeout_add_seconds(2, call_mis_pulse_init, priv);
+		}
 
 		pa_glib_mainloop_free(pa_glib_main);
 		return;
